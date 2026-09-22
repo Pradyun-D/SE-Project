@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+requests
+numpy
+faiss-cpu
+rank-bm25
+langgraph
+pypdf
