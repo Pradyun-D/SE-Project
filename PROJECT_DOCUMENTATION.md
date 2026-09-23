@@ -7,18 +7,18 @@ This project converts a short software requirement into a structured Software Re
 The system combines:
 
 - Regulatory PDF retrieval
-- Hybrid search using BM25 and FAISS
+- Hybrid search using BM25 and a configurable Qdrant or FAISS vector index
 - BGE-M3 semantic embeddings
 - BGE cross-encoder reranking
 - Qwen 3 4B generation
 - LangGraph workflow orchestration
-- Persistent document and vector caching
+- Persistent document caching and Qdrant or FAISS vector storage
 - File-based streaming of intermediate model output
 - Structured SRS generation with citations and SDLC recommendations
 
 The design separates lightweight orchestration from GPU model inference:
 
-- The local machine runs the API, PDF parsing, BM25, FAISS, and LangGraph orchestration.
+- The local machine runs the API, PDF parsing, BM25, vector retrieval, and LangGraph orchestration.
 - Kaggle runs Qwen, BGE-M3, and the BGE reranker behind HTTP APIs.
 
 ---
@@ -29,7 +29,7 @@ The design separates lightweight orchestration from GPU model inference:
 flowchart LR
     User[User or Client]
     Local[Local FastAPI Backend]
-    Cache[(Persistent Cache<br/>chunks.json + index.faiss + manifest.json)]
+   Cache[(Persistent Cache<br/>chunks.json + vector database + manifest.json)]
     Docs[(backend/docs<br/>Regulatory PDFs)]
     Kaggle[Kaggle GPU Model Server]
     Qwen[Qwen 3 4B<br/>Generation]
@@ -46,7 +46,7 @@ flowchart LR
     Kaggle --> BGE
     Kaggle --> Reranker
     Kaggle --> Qwen
-    Local -->|BM25 + FAISS + RRF| Local
+   Local -->|BM25 + Qdrant/FAISS + RRF| Local
     Local -->|Write tokens during workflow| Stream
     Local -->|Remove think blocks and save| Responses
     Local -->|Final SRS and metadata| User
@@ -60,7 +60,7 @@ flowchart LR
 | PDF extraction | Yes | No |
 | Chunk storage | Yes | No |
 | BM25 search | Yes | No |
-| FAISS index | Yes | No |
+| Vector index | Yes, Qdrant or FAISS | No |
 | Embedding model | No | BGE-M3 |
 | Reranking model | No | BGE-Reranker-v2-M3 |
 | Text generation | No | Qwen 3 4B |
@@ -81,7 +81,7 @@ flowchart LR
 | HTTP client | Requests | Calls Kaggle model APIs |
 | PDF parser | pypdf | Extracts text without local ML inference |
 | Sparse retrieval | rank-bm25 | Keyword-based document retrieval |
-| Dense retrieval | FAISS CPU | Similarity search over normalized embeddings |
+| Dense retrieval | Qdrant by default, FAISS fallback | Similarity search over normalized embeddings |
 | Numerical processing | NumPy | Embedding arrays and ranking operations |
 | Workflow engine | LangGraph | Connects the requirement engineering stages |
 | Runtime language | Python 3.13 | Application implementation |
@@ -138,21 +138,23 @@ The current parser is intentionally lightweight. It extracts text reliably from 
 
 ---
 
-## 5. Persistent Cache
+## 5. Persistent Cache and Vector Database
 
 The persistent cache is stored here:
 
 ```text
 backend/data/
 ├── chunks.json
-├── index.faiss
+├── index.faiss                 # used only with RAG_VECTOR_DB_BACKEND=faiss
+├── qdrant/                     # used by the default local Qdrant backend
 └── manifest.json
 ```
 
 ### Cache files
 
 - `chunks.json`: Parsed text chunks and source metadata.
-- `index.faiss`: Normalized dense embedding index.
+- `index.faiss`: Normalized dense embedding index when the FAISS fallback is selected.
+- `qdrant/`: Persistent local Qdrant storage when using the default backend.
 - `manifest.json`: PDF names, sizes, and modification timestamps.
 
 ### Startup behavior
@@ -162,10 +164,10 @@ flowchart TD
     Start[API startup] --> Check{Cache files exist?}
     Check -->|No| Parse[Parse PDFs]
     Check -->|Yes| Signature{PDF manifest unchanged?}
-    Signature -->|Yes| Load[Load chunks and FAISS index]
+   Signature -->|Yes| Load[Load chunks and vector index]
     Signature -->|No| Parse
     Parse --> Embed[Call Kaggle /embed in batches]
-    Embed --> Build[Build BM25 and FAISS indexes]
+   Embed --> Build[Build BM25 and Qdrant/FAISS indexes]
     Build --> Save[Atomically save cache]
     Load --> Ready[API ready]
     Save --> Ready
@@ -194,11 +196,11 @@ The retrieval implementation is in [backend/rag/vector_store.py](backend/rag/vec
 2. **Dense retrieval**
    - Sends the query to Kaggle `/embed`.
    - Normalizes the query vector.
-   - Searches the local FAISS inner-product index.
+   - Searches Qdrant by default, or the local FAISS inner-product index when configured as fallback.
    - Because vectors are normalized, inner product behaves as cosine similarity.
 
 3. **Reciprocal Rank Fusion**
-   - Combines BM25 and FAISS rankings.
+   - Combines BM25 and dense-vector rankings.
    - Uses the standard RRF scoring form:
 
    $$

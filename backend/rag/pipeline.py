@@ -3,8 +3,27 @@ from .cache import load_chunks, save_chunks
 
 
 class RegulatoryRAGPipeline:
-    def __init__(self, model_client, top_k_fusion: int, final_k: int, embedding_batch_size: int = 32):
-        self.store = HybridVectorStore(model_client, embedding_batch_size)
+    def __init__(
+        self,
+        model_client,
+        top_k_fusion: int,
+        final_k: int,
+        embedding_batch_size: int = 32,
+        vector_db_backend: str = "faiss",
+        vector_db_path: str | None = None,
+        vector_db_url: str | None = None,
+        vector_db_api_key: str | None = None,
+        vector_db_collection: str = "regulatory_chunks",
+    ):
+        self.store = HybridVectorStore(
+            model_client,
+            embedding_batch_size,
+            backend=vector_db_backend,
+            database_path=vector_db_path,
+            database_url=vector_db_url,
+            api_key=vector_db_api_key,
+            collection_name=vector_db_collection,
+        )
         self.top_k_fusion = top_k_fusion
         self.final_k = final_k
 

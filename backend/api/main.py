@@ -27,6 +27,11 @@ pipeline = RegulatoryRAGPipeline(
     settings.top_k_fusion,
     settings.final_k,
     settings.embedding_batch_size,
+    settings.vector_db_backend,
+    settings.vector_db_path,
+    settings.vector_db_url,
+    settings.vector_db_api_key,
+    settings.vector_db_collection,
 )
 workflow = FinTechRequirementsWorkflow(pipeline, model_client.generate)
 
@@ -34,8 +39,14 @@ workflow = FinTechRequirementsWorkflow(pipeline, model_client.generate)
 def initialize_pipeline(force: bool = False) -> tuple[int, int]:
     if not force and cache_is_current(settings.cache_dir, settings.data_dir):
         logger.info("Loading the persistent document cache")
-        pipeline.load(settings.cache_dir)
-        return len(document_signature(settings.data_dir)), len(pipeline.store.chunks)
+        try:
+            pipeline.load(settings.cache_dir)
+            return len(document_signature(settings.data_dir)), len(pipeline.store.chunks)
+        except FileNotFoundError as error:
+            logger.warning(
+                "Persistent cache exists but its vector backend is unavailable; rebuilding the index: %s",
+                error,
+            )
 
     logger.info("Cache missing, stale, or force requested; rebuilding document index")
     chunks, document_count = parse_pdf_directory(settings.data_dir)

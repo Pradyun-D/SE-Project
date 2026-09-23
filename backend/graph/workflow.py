@@ -17,7 +17,7 @@ class FinTechRequirementsWorkflow:
         self.requirement_agent = RequirementExtractionAgent(generate)
         self.quality_agent = QualityCheckAgent(generate)
         self.sdlc_agent = SDLCSelectionAgent(generate)
-        self.documentation_agent = DocumentationAgent()
+        self.documentation_agent = DocumentationAgent(generate)
         self.app = self._build_graph()
 
     def retrieve_node(self, state: GraphState) -> dict[str, Any]:
@@ -61,9 +61,12 @@ class FinTechRequirementsWorkflow:
             state.get("organization_scale", "Medium"),
             state.get("generation_options", {}),
         )
+        factors = result.get("derived_factors", {})
+        recommendation = dict(result.get("sdlc_recommendation", {}))
+        recommendation["derived_factors"] = factors
         return {
-            "sdlc_factors": result.get("derived_factors", {}),
-            "sdlc_recommendation": result.get("sdlc_recommendation", {}),
+            "sdlc_factors": factors,
+            "sdlc_recommendation": recommendation,
         }
 
     def approval_node(self, state: GraphState) -> dict[str, Any]:
@@ -79,6 +82,7 @@ class FinTechRequirementsWorkflow:
             state.get("extracted_requirements", []),
             state.get("quality_check", {}),
             sdlc,
+            state.get("generation_options", {}),
         )
         return {"final_srs_markdown": markdown}
 
