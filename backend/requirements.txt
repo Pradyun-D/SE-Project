@@ -3,7 +3,6 @@ uvicorn[standard]
 pydantic-settings
 requests
 numpy
-faiss-cpu
 rank-bm25
 qdrant-client
 langgraph

@@ -30,3 +30,25 @@ class IngestResponse(BaseModel):
     chunks: int
 
 
+class QualityCheckResult(BaseModel):
+    is_complete: bool = False
+    ambiguity_score: float = Field(default=1.0, ge=0, le=1)
+    missing_aspects: list[str] = Field(default_factory=list)
+    clarification_questions: list[str] = Field(default_factory=list)
+    conflicts: list[dict[str, Any]] = Field(default_factory=list)
+    traceability_coverage: float = Field(default=0.0, ge=0, le=1)
+
+
+class SDLCRecommendation(BaseModel):
+    primary_recommendation: str = "DevSecOps"
+    decision_rationale: str = ""
+    ranked_scores: list[dict[str, Any]] = Field(default_factory=list)
+    custom_workflow_phases: list[Any] = Field(default_factory=list)
+    approval_checkpoints: list[Any] = Field(default_factory=list)
+
+
+class SDLCResult(BaseModel):
+    derived_factors: dict[str, Any] = Field(default_factory=dict)
+    sdlc_recommendation: SDLCRecommendation
+
+

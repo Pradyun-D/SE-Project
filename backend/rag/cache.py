@@ -18,14 +18,17 @@ def document_signature(folder_path: str) -> list[dict[str, int | str]]:
     ]
 
 
-def cache_is_current(cache_dir: str, docs_dir: str) -> bool:
-    # Step 1: Require every persisted index file before loading the cache.
+def cache_is_current(
+    cache_dir: str,
+    docs_dir: str,
+    embedding_model: str,
+    embedding_dimensions: int,
+) -> bool:
     cache = Path(cache_dir)
     manifest_path = cache / "manifest.json"
     chunks_path = cache / "chunks.json"
-    index_path = cache / "index.faiss"
-    if not manifest_path.is_file() or not chunks_path.is_file() or not index_path.is_file():
-        logger.info("Cache miss: one or more persisted index files are missing")
+    if not manifest_path.is_file() or not chunks_path.is_file():
+        logger.info("Cache miss: persisted chunks or document manifest is missing")
         return False
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -34,6 +37,12 @@ def cache_is_current(cache_dir: str, docs_dir: str) -> bool:
         return False
     saved_documents = manifest.get("documents")
     current_documents = document_signature(docs_dir)
+    if manifest.get("embedding_model") != embedding_model:
+        logger.info("Cache stale: embedding model has changed")
+        return False
+    if manifest.get("embedding_dimensions") != embedding_dimensions:
+        logger.info("Cache stale: embedding dimensions have changed")
+        return False
     current = saved_documents == current_documents
     if not current:
         logger.info("Cache stale: document signature has changed")
@@ -42,7 +51,13 @@ def cache_is_current(cache_dir: str, docs_dir: str) -> bool:
     return current
 
 
-def save_chunks(cache_dir: str, chunks: list[dict], docs_dir: str) -> None:
+def save_chunks(
+    cache_dir: str,
+    chunks: list[dict],
+    docs_dir: str,
+    embedding_model: str,
+    embedding_dimensions: int,
+) -> None:
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
     chunks_path = cache / "chunks.json"
@@ -51,7 +66,14 @@ def save_chunks(cache_dir: str, chunks: list[dict], docs_dir: str) -> None:
     manifest_temp = cache / "manifest.json.tmp"
     chunks_temp.write_text(json.dumps(chunks, ensure_ascii=False), encoding="utf-8")
     manifest_temp.write_text(
-        json.dumps({"documents": document_signature(docs_dir)}, indent=2),
+        json.dumps(
+            {
+                "documents": document_signature(docs_dir),
+                "embedding_model": embedding_model,
+                "embedding_dimensions": embedding_dimensions,
+            },
+            indent=2,
+        ),
         encoding="utf-8",
     )
     chunks_temp.replace(chunks_path)

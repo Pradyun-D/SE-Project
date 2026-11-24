@@ -1,8 +1,8 @@
 import json
-import re
 from typing import Any
 
 from .base import AgentBase
+from schemas import SDLCResult
 
 
 class SDLCSelectionAgent(AgentBase):
@@ -12,92 +12,70 @@ class SDLCSelectionAgent(AgentBase):
         scale: str,
         generation_options: dict[str, Any],
     ) -> dict[str, Any]:
-        factors = self._derive_factors(requirements, scale)
-        deterministic_scores = self._rank_models(factors)
         prompt = f"""You are a senior software architect for regulated banking systems.
 Evaluate the requirements and recommend an SDLC approach. Consider Agile, DevSecOps,
-Agile-V-Model Hybrid, V-Model, Spiral, Waterfall, and hybrid models. Use the derived
-factors and deterministic ranking below, then provide project-specific explanations,
-workflow phases, roles, deliverables, validation gates, security controls, compliance
-checkpoints, and human approval checkpoints.
+Agile-V-Model Hybrid, V-Model, Spiral, Waterfall, and other justified hybrid models.
+Derive the decision from requirement stability, regulatory criticality, security risk,
+project complexity, system size, legacy-system dependence, expected change frequency,
+need for continuous delivery, stakeholder availability, testing/documentation burden,
+budget/schedule constraints, need for formal verification, and consequences of failure.
+
+For every considered model, provide a suitability score, rationale, strengths, limitations,
+and risks. For the selected model, provide a project-specific workflow with ordered
+phases; activities; responsible roles; inputs and outputs; deliverables; security and
+privacy controls; regulatory/compliance checkpoints; validation and testing gates;
+deployment/release gates; and human approval checkpoints. Do not return a generic SDLC
+definition. Make the recommendation and ranking yourself.
 Return only valid JSON:
-{{"derived_factors": {json.dumps(factors)}, "sdlc_recommendation": {{"primary_recommendation": "", "ranked_scores": [], "custom_workflow_phases": [], "approval_checkpoints": []}}}}
+{{"derived_factors": {{}}, "sdlc_recommendation": {{"primary_recommendation": "", "decision_rationale": "", "ranked_scores": [{{"model_name": "", "suitability_percentage": 0, "rationale": "", "strengths": [], "limitations": [], "risks": []}}], "custom_workflow_phases": [{{"phase_name": "", "sequence": 1, "objective": "", "activities": [], "roles": [], "inputs": [], "deliverables": [], "security_controls": [], "compliance_checkpoints": [], "validation_gates": [], "human_approval_checkpoint": ""}}], "approval_checkpoints": []}}}}
 
 Target scale: {scale}
-Deterministic ranked baseline:
-{json.dumps(deterministic_scores, indent=2)}
 Requirements:
 {json.dumps(requirements, indent=2)}"""
         try:
             result = self.ask_json(prompt, generation_options)
-            recommendation = result.setdefault("sdlc_recommendation", {})
-            result["derived_factors"] = {**factors, **result.get("derived_factors", {})}
-            llm_scores = {
-                item.get("model_name", item.get("model")): item.get("justification", item.get("rationale", ""))
-                for item in recommendation.get("ranked_scores", [])
-                if isinstance(item, dict)
-            }
-            recommendation["ranked_scores"] = [
-                {**item, "justification": llm_scores.get(item["model_name"], item["justification"])}
-                for item in deterministic_scores
-            ]
-            recommendation["primary_recommendation"] = deterministic_scores[0]["model_name"]
-            recommendation.setdefault("approval_checkpoints", self._approval_checkpoints(factors))
-            return result
+            return SDLCResult.model_validate(result).model_dump()
         except (ValueError, json.JSONDecodeError):
-            return {
-                "derived_factors": factors,
-                "sdlc_recommendation": {
-                    "primary_recommendation": deterministic_scores[0]["model_name"],
-                    "ranked_scores": deterministic_scores,
+            factors = self._derive_fallback_factors(requirements, scale)
+            return SDLCResult(
+                derived_factors=factors,
+                sdlc_recommendation={
+                    "primary_recommendation": "Agile-V-Model Hybrid",
+                    "decision_rationale": "Fallback recommendation based on regulatory and verification needs.",
+                    "ranked_scores": [
+                        {
+                            "model_name": "Agile-V-Model Hybrid",
+                            "suitability_percentage": 85,
+                            "rationale": "Combines iterative delivery with formal verification and compliance gates.",
+                        },
+                        {
+                            "model_name": "DevSecOps",
+                            "suitability_percentage": 78,
+                            "rationale": "Strong continuous security and delivery controls.",
+                        },
+                        {
+                            "model_name": "V-Model",
+                            "suitability_percentage": 74,
+                            "rationale": "Strong traceability and verification discipline.",
+                        },
+                    ],
                     "custom_workflow_phases": [],
-                    "approval_checkpoints": self._approval_checkpoints(factors),
+                    "approval_checkpoints": [
+                        "Requirements baseline and evidence approved",
+                        "Security and privacy assessment approved",
+                        "Compliance validation approved before release",
+                    ],
                 },
-            }
+            ).model_dump()
 
     @staticmethod
-    def _derive_factors(requirements: list[dict[str, Any]], scale: str) -> dict[str, Any]:
-        text = " ".join(json.dumps(item).lower() for item in requirements)
-        count = len(requirements)
-        has = lambda *terms: any(term in text for term in terms)
-        regulatory = "High" if has("regulation", "compliance", "rbi", "audit") else "Medium"
-        security = "High" if has("security", "privacy", "consent", "risk", "authentication") else "Medium"
-        complexity = "High" if count >= 8 or has("integration", "legacy", "distributed", "microservice") else "Medium"
+    def _derive_fallback_factors(requirements: list[dict[str, Any]], scale: str) -> dict[str, Any]:
+        text = json.dumps(requirements).lower()
         return {
-            "requirement_stability": "Low" if has("change frequently", "evolving", "uncertain") else "High",
-            "regulatory_criticality": regulatory,
-            "security_risk": security,
-            "project_complexity": complexity,
+            "requirement_stability": "High" if "change" not in text else "Low",
+            "regulatory_criticality": "High" if any(term in text for term in ("regulation", "compliance", "audit")) else "Medium",
+            "security_risk": "High" if any(term in text for term in ("security", "privacy", "consent")) else "Medium",
+            "project_complexity": "High" if len(requirements) >= 6 else "Medium",
             "system_size": scale,
-            "legacy_system_dependence": "High" if has("legacy", "mainframe", "existing system") else "Low",
-            "frequency_of_expected_changes": "High" if has("frequent", "continuous", "iterative") else "Medium",
-            "need_for_continuous_delivery": "High" if has("continuous delivery", "deploy", "release") else "Medium",
-            "stakeholder_availability": "Low" if has("limited stakeholder", "unavailable") else "Medium",
-            "testing_and_documentation_requirements": "High" if has("test", "documentation", "traceability") else "Medium",
-            "budget_and_schedule_constraints": "High" if has("budget", "deadline", "schedule") else "Medium",
-            "need_for_formal_verification": "High" if has("formal verification", "validation", "proof") else "Medium",
-            "consequences_of_system_failure": "High" if has("critical", "financial", "failure", "availability") else "Medium",
+            "legacy_system_dependence": "High" if "legacy" in text else "Low",
         }
-
-    @staticmethod
-    def _rank_models(factors: dict[str, Any]) -> list[dict[str, Any]]:
-        score = {"Agile": 50, "DevSecOps": 50, "Agile-V-Model Hybrid": 50, "V-Model": 50, "Spiral": 50, "Waterfall": 50}
-        if factors["requirement_stability"] == "High": score["Waterfall"] += 20; score["V-Model"] += 15
-        else: score["Agile"] += 20; score["DevSecOps"] += 15
-        if factors["regulatory_criticality"] == "High": score["V-Model"] += 18; score["Agile-V-Model Hybrid"] += 20
-        if factors["security_risk"] == "High": score["DevSecOps"] += 20; score["Spiral"] += 12
-        if factors["project_complexity"] == "High": score["Spiral"] += 18
-        if factors["need_for_continuous_delivery"] == "High": score["DevSecOps"] += 22
-        if factors["need_for_formal_verification"] == "High": score["V-Model"] += 22; score["Agile-V-Model Hybrid"] += 15
-        if factors["consequences_of_system_failure"] == "High": score["V-Model"] += 12; score["Spiral"] += 10
-        ranked = sorted(score.items(), key=lambda item: item[1], reverse=True)
-        return [{"model_name": name, "suitability_percentage": min(value, 99), "justification": "Deterministic factor-based baseline"} for name, value in ranked]
-
-    @staticmethod
-    def _approval_checkpoints(factors: dict[str, Any]) -> list[str]:
-        checkpoints = ["Requirements baseline and evidence approved", "Security and privacy threat assessment approved"]
-        if factors["regulatory_criticality"] == "High":
-            checkpoints.append("Regulatory mapping and compliance test plan approved")
-        if factors["need_for_formal_verification"] == "High":
-            checkpoints.append("Verification and validation evidence approved before release")
-        return checkpoints

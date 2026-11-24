@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 import requests
 
@@ -10,6 +11,14 @@ def main() -> None:
     health = requests.get(f"{API_URL}/health", timeout=30)
     health.raise_for_status()
     print(f"API health: {health.json()}")
+
+    ingest = requests.post(f"{API_URL}/ingest", timeout=3600)
+    ingest.raise_for_status()
+    ingest_result = ingest.json()
+    print(
+        f"Ingested documents: {ingest_result['documents']} "
+        f"({ingest_result['chunks']} chunks)"
+    )
 
     request = {
         "minimal_requirement": (
@@ -30,6 +39,11 @@ def main() -> None:
     )
     response.raise_for_status()
     result = response.json()
+    assert result["response"].strip(), "The generated response is empty"
+    assert result["extracted_requirements"], "No requirements were extracted"
+    assert result["sdlc_recommendation"], "No SDLC recommendation was generated"
+    assert Path(result["stream_file"]).is_file(), "The stream file was not created"
+    assert Path(result["response_file"]).is_file(), "The response file was not created"
     print(f"Stream saved to: {result['stream_file']}")
     print(f"Response saved to: {result['response_file']}")
     print(f"Retrieved sources: {len(result['sources'])}")

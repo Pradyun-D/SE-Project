@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Requirements &amp; SDLC</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="."><span class="brand-mark" aria-hidden="true">R</span><strong>Requirements &amp; SDLC</strong></a>
+    </header>
+
+    <main class="workspace">
+      <section class="intro">
+        <p class="eyebrow">FINANCIAL SOFTWARE DISCOVERY</p>
+        <h1>Turn a rough scenario into a defensible delivery plan.</h1>
+        <p class="intro-copy">Describe the product, workflow, or change. The requirement and SDLC agents will shape the ambiguity into structured evidence, controls, and an implementation path.</p>
+      </section>
+
+      <section class="control-grid">
+        <form class="brief-panel panel" id="generationForm">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">01 / BRIEF</p>
+              <h2>Start with the scenario</h2>
+            </div>
+          </div>
+
+          <label class="field-label" for="scenario">Minimal requirement</label>
+          <textarea id="scenario" name="scenario" required minlength="1" placeholder="Example: Customers should link savings accounts and fetch statements using PAN and DOB, with consent management, audit logging, and secure retention."></textarea>
+
+          <div class="field-row">
+            <div>
+              <label class="field-label" for="scale">Organisation scale</label>
+              <select id="scale" name="scale">
+                <option>Startup</option>
+                <option selected>Medium</option>
+                <option>Enterprise</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="temperature">Model temperature</label>
+              <input id="temperature" name="temperature" type="number" min="0" max="2" step="0.1" value="0.3">
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <label class="toggle-control">
+              <input id="useRag" type="checkbox" checked>
+              <span class="toggle-ui"></span>
+              <span><strong>Regulatory context</strong><small>Use cached Qdrant evidence</small></span>
+            </label>
+            <label class="toggle-control">
+              <input id="approved" type="checkbox" checked>
+              <span class="toggle-ui"></span>
+              <span><strong>Human approval</strong><small>Mark checkpoint as approved</small></span>
+            </label>
+          </div>
+
+          <button class="primary-button" type="submit" id="generateButton">
+            <span>Generate requirements</span>
+            <span class="button-arrow" aria-hidden="true">&#8599;</span>
+          </button>
+          <p class="form-note" id="formStatus">The API must be running locally.</p>
+        </form>
+
+        <aside class="system-panel panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">WHAT HAPPENS NEXT</p>
+              <h2>Analysis steps</h2>
+            </div>
+          </div>
+          <div class="readiness-card">
+            <strong id="indexState">Ready to analyse</strong>
+            <p id="indexDetail">Enter a scenario and start the analysis.</p>
+          </div>
+          <div class="pipeline-list">
+            <div class="pipeline-step" data-step="requirements"><span class="step-number">01</span><span>Extract requirements</span><span class="step-state">Waiting</span></div>
+            <div class="pipeline-step" data-step="quality"><span class="step-number">02</span><span>Review completeness</span><span class="step-state">Waiting</span></div>
+            <div class="pipeline-step" data-step="sdlc"><span class="step-number">03</span><span>Select SDLC</span><span class="step-state">Waiting</span></div>
+            <div class="pipeline-step" data-step="approval"><span class="step-number">04</span><span>Apply approval checkpoint</span><span class="step-state">Waiting</span></div>
+            <div class="pipeline-step" data-step="document"><span class="step-number">05</span><span>Prepare document</span><span class="step-state">Waiting</span></div>
+          </div>
+            <div class="system-actions">
+              <button class="secondary-button" type="button" id="ingestButton">Refresh document index <span>&#8635;</span></button>
+              <button class="secondary-button" type="button" id="latestButton">Load latest document <span>&#8599;</span></button>
+            </div>
+        </aside>
+      </section>
+
+      <section class="results-section" id="resultsSection" hidden>
+        <div class="results-heading">
+          <div>
+            <p class="eyebrow">02 / FINDINGS</p>
+            <h2>Your document is ready</h2>
+          </div>
+        </div>
+        <article class="srs-card">
+          <div class="card-heading"><h3>Generated SRS / PRD</h3><div><span class="result-meta" id="resultMeta"></span><button class="copy-button" id="copyButton" type="button">Copy document</button></div></div>
+          <div id="srsOutput" class="srs-output"></div>
+        </article>
+      </section>
+    </main>
+    <footer><span>Requirements &amp; SDLC</span><span>Your analysis stays in this workspace</span></footer>
+  </div>
+  <script src="app.js?v=20260925-4"></script>
+</body>
+</html>

@@ -45,5 +45,7 @@
       "size": 340801,
       "modified_ns": 1786018527546202900
     }
-  ]
+  ],
+  "embedding_model": "gemini-embedding-001",
+  "embedding_dimensions": 1024
 }

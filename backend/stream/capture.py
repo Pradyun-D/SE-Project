@@ -19,10 +19,17 @@ class FileStreamingGenerator:
         response: list[str] = []
         try:
             from config import get_settings
-            from model_client import RemoteModelClient
+            from model_client import GeminiModelClient
 
             settings = get_settings()
-            client = RemoteModelClient(settings.kaggle_url, settings.model_timeout_seconds)
+            client = GeminiModelClient(
+                settings.gemini_api_key,
+                settings.gemini_generation_model,
+                settings.gemini_embedding_model,
+                settings.gemini_embedding_dimensions,
+                settings.model_timeout_seconds,
+                settings.model_retry_count,
+            )
             for token in client.generate_stream(prompt, **generation_options):
                 response.append(token)
                 self.file.write(token)

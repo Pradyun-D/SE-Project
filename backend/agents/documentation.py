@@ -22,11 +22,16 @@ Write the final Software Requirements Specification as polished Markdown.
 
 Do not return JSON. Do not discuss this prompt. Use the supplied analysis as source
 material, but choose a natural document structure and readable prose yourself.
-Preserve citations and evidence exactly where provided. Do not invent regulations,
-requirements, scores, or approvals. The deterministic SDLC ranking is authoritative;
-explain it rather than changing it. Include requirements, quality gaps, derived SDLC
-factors, ranked recommendations, workflow phases, controls, deliverables, validation
-gates, compliance checkpoints, and human approval checkpoints where the data supports them.
+Preserve citations, evidence, assumptions, and traceability links exactly where provided.
+Do not invent regulations, requirements, scores, or approvals. Include the request
+analysis summary, stakeholder concerns, assumptions, detected conflicts and their
+resolution questions, functional and non-functional requirements, user stories, use
+cases, acceptance criteria, and a requirement-to-source/control/test traceability view.
+Include quality gaps, clarification questions, traceability coverage, all derived SDLC
+decision factors, the decision rationale, a comparison of candidate models, and the
+selected model's ordered phases, activities, roles, inputs, deliverables, security and
+privacy controls, compliance checkpoints, validation gates, release gates, and human
+approval checkpoints.
 
 Initial request:
 {user_query}

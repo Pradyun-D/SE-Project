@@ -8,7 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):
-    kaggle_url: str = "https://simplify-imaginary-hardness.ngrok-free.dev"
+    gemini_api_key: str = ""
+    gemini_generation_model: str = "gemini-3.5-flash-lite"
+    gemini_embedding_model: str = "gemini-embedding-001"
+    gemini_embedding_dimensions: int = 1024
     model_timeout_seconds: float = 3600.0
     model_retry_count: int = 5
     embedding_batch_size: int = 8
@@ -18,7 +21,6 @@ class Settings(BaseSettings):
     response_dir: str = str(BASE_DIR / "responses")
     top_k_fusion: int = 20
     final_k: int = 5
-    vector_db_backend: str = "qdrant"
     vector_db_path: str = str(BASE_DIR / "data" / "qdrant")
     vector_db_url: str | None = None
     vector_db_api_key: str | None = None
