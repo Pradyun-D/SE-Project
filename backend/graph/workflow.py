@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class FinTechRequirementsWorkflow:
-    def __init__(self, pipeline: RegulatoryRAGPipeline, generate):
+    def __init__(self, pipeline: RegulatoryRAGPipeline, generate, on_progress=None):
         self.pipeline = pipeline
+        self.on_progress = on_progress
         self.requirement_agent = RequirementExtractionAgent(generate)
         self.quality_agent = QualityCheckAgent(generate)
         self.sdlc_agent = SDLCSelectionAgent(generate)
@@ -22,6 +23,8 @@ class FinTechRequirementsWorkflow:
 
     def retrieve_node(self, state: GraphState) -> dict[str, Any]:
         logger.info("Workflow step 1/6: retrieving regulatory context")
+        if self.on_progress:
+            self.on_progress("Searching PDFs, embedding the query, and reranking matches…")
         if not state.get("use_rag", True):
             return {"retrieved_context": [], "context_str": ""}
         chunks = self.pipeline.store.retrieve(
@@ -37,6 +40,8 @@ class FinTechRequirementsWorkflow:
 
     def extract_node(self, state: GraphState) -> dict[str, Any]:
         logger.info("Workflow step 2/6: extracting requirements")
+        if self.on_progress:
+            self.on_progress("Extracting structured requirements…")
         result = self.requirement_agent.run(
             state["user_query"],
             state.get("context_str", ""),
@@ -47,6 +52,8 @@ class FinTechRequirementsWorkflow:
 
     def quality_node(self, state: GraphState) -> dict[str, Any]:
         logger.info("Workflow step 3/6: checking requirement quality")
+        if self.on_progress:
+            self.on_progress("Checking completeness and ambiguity…")
         result = self.quality_agent.run(
             state["user_query"],
             state.get("extracted_requirements", []),
@@ -56,6 +63,8 @@ class FinTechRequirementsWorkflow:
 
     def sdlc_node(self, state: GraphState) -> dict[str, Any]:
         logger.info("Workflow step 4/6: selecting SDLC approach")
+        if self.on_progress:
+            self.on_progress("Choosing an SDLC approach…")
         result = self.sdlc_agent.run(
             state.get("extracted_requirements", []),
             state.get("organization_scale", "Medium"),
@@ -75,6 +84,8 @@ class FinTechRequirementsWorkflow:
 
     def documentation_node(self, state: GraphState) -> dict[str, Any]:
         logger.info("Workflow step 6/6: assembling final SRS")
+        if self.on_progress:
+            self.on_progress("Writing the final SRS…")
         sdlc = state.get("sdlc_recommendation", {})
         markdown = self.documentation_agent.generate_srs_markdown(
             state["user_query"],
@@ -83,6 +94,7 @@ class FinTechRequirementsWorkflow:
             state.get("quality_check", {}),
             sdlc,
             state.get("generation_options", {}),
+            state.get("context_str", ""),
         )
         return {"final_srs_markdown": markdown}
 

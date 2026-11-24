@@ -15,16 +15,24 @@ class DocumentationAgent:
         quality: dict[str, Any],
         sdlc: dict[str, Any],
         generation_options: dict[str, Any] | None = None,
+        regulatory_context: str = "",
     ) -> str:
         if self.generate is not None:
             prompt = f"""You are the documentation architect for a regulated FinTech project.
 Write the final Software Requirements Specification as polished Markdown.
+You may use relevant material from the regulatory knowledge base, including its IEEE
+830 reference, together with your own reasoning to choose a clear SRS structure.
+Use IEEE 830 as guidance when useful; it is not mandatory, and missing retrieved
+IEEE 830 material must never prevent you from completing the SRS. Do not invent
+regulatory requirements or citations.
 
 Do not return JSON. Do not discuss this prompt. Use the supplied analysis as source
 material, but choose a natural document structure and readable prose yourself.
 Preserve citations and evidence exactly where provided. Do not invent regulations,
-requirements, scores, or approvals. The deterministic SDLC ranking is authoritative;
-explain it rather than changing it. Include requirements, quality gaps, derived SDLC
+requirements, scores, or approvals. The SDLC agent's ranking is authoritative;
+explain it rather than changing it. Treat the first item in ranked_scores as the top
+choice and explain why it best fits the requirements and derived factors. Do not
+expect a separate primary recommendation field. Include requirements, quality gaps, derived SDLC
 factors, ranked recommendations, workflow phases, controls, deliverables, validation
 gates, compliance checkpoints, and human approval checkpoints where the data supports them.
 
@@ -41,6 +49,9 @@ Quality analysis:
 
 SDLC analysis:
 {json.dumps(sdlc, indent=2)}
+
+Retrieved knowledge-base context (may include IEEE 830 guidance):
+{regulatory_context or 'No relevant context was retrieved; use your own reasoning for the SRS structure.'}
 """
             try:
                 rendered = self.generate(prompt, **(generation_options or {}))
@@ -52,7 +63,10 @@ SDLC analysis:
             except Exception:
                 pass
 
-        recommendation = sdlc.get("primary_recommendation", "DevSecOps")
+        ranked_scores = sdlc.get("ranked_scores", [])
+        recommendation = "DevSecOps"
+        if ranked_scores and isinstance(ranked_scores[0], dict):
+            recommendation = ranked_scores[0].get("model_name", ranked_scores[0].get("model", recommendation))
         requirement_sections = []
         for item in requirements:
             criteria = "\n".join(f"- {criterion}" for criterion in item.get("acceptance_criteria", []))
@@ -72,7 +86,7 @@ SDLC analysis:
         gaps = "\n".join(f"- {gap}" for gap in quality.get("missing_aspects", [])) or "- None identified"
         scores = "\n".join(
             self._format_score(item)
-            for item in sdlc.get("ranked_scores", [])
+            for item in ranked_scores
         ) or "- No ranked scores returned"
         phases = "\n".join(
             self._format_phase(item)

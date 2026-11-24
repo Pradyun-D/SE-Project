@@ -1,20 +1,26 @@
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 class FileStreamingGenerator:
-    def __init__(self, stream_dir: str, response_dir: str):
+    def __init__(self, stream_dir: str, response_dir: str, on_token: Callable[[str], None] | None = None, on_stage: Callable[[str], None] | None = None):
         self.stream_dir = Path(stream_dir)
         self.response_dir = Path(response_dir)
         self.stream_dir.mkdir(parents=True, exist_ok=True)
         self.path = self._next_path()
         self.file = self.path.open("w", encoding="utf-8")
         self.stage = 0
+        self.on_token = on_token
+        self.on_stage = on_stage
+        self.stage_names = ["Requirements", "Quality Review", "SDLC Recommendation", "SRS"]
 
     def __call__(self, prompt: str, **generation_options: Any) -> str:
         self.stage += 1
-        self.file.write(f"\n\n--- MODEL STAGE {self.stage} ---\n")
+        stage_name = self.stage_names[min(self.stage - 1, len(self.stage_names) - 1)]
+        if self.on_stage:
+            self.on_stage(stage_name)
+        self.file.write(f"\n\n--- {stage_name.upper()} ---\n")
         self.file.flush()
         response: list[str] = []
         try:
@@ -27,6 +33,8 @@ class FileStreamingGenerator:
                 response.append(token)
                 self.file.write(token)
                 self.file.flush()
+                if self.on_token:
+                    self.on_token(token)
         except Exception:
             self.file.write("\n[Streaming stage failed]\n")
             self.file.flush()

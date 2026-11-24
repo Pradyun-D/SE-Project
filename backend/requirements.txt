@@ -8,3 +8,4 @@ rank-bm25
 qdrant-client
 langgraph
 pypdf
+streamlit

@@ -1,96 +1,97 @@
-# Software Requirements Specification
+# Software Requirements Specification (SRS)
 
-## Executive Summary
-- Initial request: Users should link savings accounts and fetch financial statements using PAN and DOB with consent management, audit logging, and secure data retention.
-- Target organization scale: Medium
-- Recommended SDLC: V-Model
+## 1. Introduction
 
-## Classified Requirements
+### 1.1 Purpose
 
-### FR-AA-001 - PAN/DOB-Based Account Linking with Consent
-- Category: Functional
-- Priority: Must Have
-- Citation: [DOCUMENT: ReBIT Guidelines - PAN/DOB Account Discovery | LOCATION: Page 2]
-- Dimensions: business, technical, compliance
-- Regulations and policies: MeitY Electronic Consent Framework v1.1, ReBIT Guidelines - PAN/DOB Account Discovery, RBI Master Direction - NBFC-AA Directions 2016, Consent-based data access, Data minimization for account discovery
-- Risk controls: Consent verification before data access, Audit logging of consent actions
-- Evidence: [DOCUMENT: ReBIT Guidelines - PAN/DOB Account Discovery | LOCATION: Page 2], [DOCUMENT: RBI Master Direction - NBFC-AA Directions 2016 | LOCATION: Page 12]
-- Human approval checkpoint: Verify consent artifact matches PAN/DOB usage in API requests
-- Description: Enable users to link savings accounts using PAN and DOB via electronic consent, ensuring compliance with ReBIT and RBI frameworks.
-- Acceptance criteria:
-- Given a user's PAN and DOB, When they initiate account linking, Then the system must prompt for electronic consent.
-- Given a successful consent, When the system fetches financial statements, Then PAN/DOB must be masked in logs.
-- Given a failed consent, When the system attempts data retrieval, Then it must block access and log the rejection.
-### FR-AA-002 - Secure Data Retention for PAN/DOB
-- Category: Technical
-- Priority: Must Have
-- Citation: [DOCUMENT: ReBIT Guidelines - PAN/DOB Account Discovery | LOCATION: Page 2]
-- Dimensions: security, privacy, compliance
-- Regulations and policies: ReBIT Guidelines - PAN/DOB Account Discovery, RBI Master Direction - NBFC-AA Directions 2016, Data masking for sensitive identifiers, No plaintext storage of PAN/DOB
-- Risk controls: Automated masking during storage/transmission, Encryption for data at rest
-- Evidence: [DOCUMENT: ReBIT Guidelines - PAN/DOB Account Discovery | LOCATION: Page 2]
-- Human approval checkpoint: Confirm masked format is enforced in all PAN/DOB storage layers
-- Description: Store PAN and DOB in masked format only, ensuring compliance with ReBIT and RBI data protection mandates.
-- Acceptance criteria:
-- Given a PAN/DOB value, When stored in the database, Then it must be masked (e.g., last 4 digits).
-- Given a request to retrieve PAN/DOB, When the system logs it, Then the value must be masked in audit trails.
-### FR-AA-003 - Audit Logging for Consent Actions
-- Category: Functional
-- Priority: Must Have
-- Citation: [DOCUMENT: MeitY Electronic Consent Framework v1.1 | LOCATION: Page 2]
-- Dimensions: auditability, compliance
-- Regulations and policies: MeitY Electronic Consent Framework v1.1, RBI Master Direction - NBFC-AA Directions 2016, Immutable audit logs, Real-time consent tracking
-- Risk controls: Centralized audit database, Access controls for audit logs
-- Evidence: [DOCUMENT: MeitY Electronic Consent Framework v1.1 | LOCATION: Page 2]
-- Human approval checkpoint: Validate audit logs include consent timestamp, user ID, and action type
-- Description: Log all consent-related actions (e.g., granting/rejecting account linking) with timestamps and user identifiers.
-- Acceptance criteria:
-- Given a consent action, When recorded, Then the system must generate a timestamped audit entry.
-- Given an audit log query, When reviewed, Then it must show all consent events with associated user identifiers.
-### FR-AA-004 - Prevent Credential Storage
-- Category: Technical
-- Priority: Must Have
-- Citation: [DOCUMENT: RBI Master Direction - NBFC-AA Directions 2016 | LOCATION: Page 12]
-- Dimensions: security, compliance
-- Regulations and policies: RBI Master Direction - NBFC-AA Directions 2016, No credential storage, Third-party authentication only
-- Risk controls: Circuit breaker for credential access, Regular audits of credential handling
-- Evidence: [DOCUMENT: RBI Master Direction - NBFC-AA Directions 2016 | LOCATION: Page 12]
-- Human approval checkpoint: Verify no credential-related fields exist in system databases
-- Description: Ensure the system never stores customer passwords or other credentials, per RBI directives.
-- Acceptance criteria:
-- Given a request to store a password, When processed, Then the system must reject it and log the attempt.
-- Given a system audit, When reviewed, Then no credential fields should be present in logs.
+This Software Requirements Specification (SRS) defines the functional and non-functional requirements for the development of a **digital lending platform for small businesses**. The platform will enable borrowers to apply for loans, upload financial documents, track application status, and receive funding updates. Loan officers will have tools to review applications, request additional information, and approve or reject loans. The platform must integrate with multiple credit bureaus and banking providers, while supporting frequent updates to eligibility criteria, loan products, and customer workflows.
 
-## Quality Review
-- Complete: False
-- Ambiguity score: 0.6
-- Missing aspects:
-- Data retention period for PAN/DOB and audit logs
-- Mechanisms for consent revocation or modification
-- Third-party authentication protocols for PAN/DOB linkage
+This SRS is intended for use by the project team, stakeholders, and regulatory compliance officers to ensure that the platform meets all legal, operational, and technical requirements.
 
-## SDLC Evaluation
-- V-Model: 95% - 
-- Spiral: 90% - 
-- DevSecOps: 70% - 
-- Agile-V-Model Hybrid: 70% - 
-- Waterfall: 70% - 
-- Agile: 50% - 
+---
 
-## Workflow Phases
-- Regulatory Requirements Analysis: ; Gate: 
-- Security-Centric Design: ; Gate: 
-- Legacy System Integration: ; Gate: 
-- Compliance-Driven Development: ; Gate: 
-- Formal Verification: ; Gate: 
-- Production Deployment: ; Gate: 
+### 1.2 Scope
 
-## Approval Checklist
-- Requirements baseline reviewed
-- Regulatory citations verified
-- Security gates approved
-- {'checkpoint_name': 'Regulatory Requirement Review', 'description': 'Validate requirement specification against ReBIT, RBI, and MeitY mandates', 'roles': ['Compliance Officer', 'Regulatory Expert'], 'approval_type': 'Formal Sign-off'}
-- {'checkpoint_name': 'Security Architecture Approval', 'description': 'Confirm data masking, encryption, and consent verification mechanisms meet security standards', 'roles': ['Security Architect', 'Compliance Auditor'], 'approval_type': 'Formal Sign-off'}
-- {'checkpoint_name': 'Legacy System Compatibility', 'description': 'Verify integration with existing banking systems maintains data integrity and compliance', 'roles': ['Integration Specialist', 'Legacy System Analyst'], 'approval_type': 'Formal Sign-off'}
-- {'checkpoint_name': 'Compliance Validation', 'description': 'Ensure all functional requirements pass regulatory and security checkpoints', 'roles': ['Compliance Validator', 'Formal Verification Specialist'], 'approval_type': 'Formal Sign-off'}
-- {'checkpoint_name': 'Production Readiness', 'description': 'Confirm deployment meets operational and compliance requirements', 'roles': ['DevOps Engineer', 'Compliance Monitor'], 'approval_type': 'Formal Sign-off'}
+The scope of this project includes:
+
+- Development of a digital lending platform for small businesses.
+- Integration with multiple credit bureaus and banking providers.
+- Support for frequent updates to eligibility criteria, loan products, and customer workflows.
+- Implementation of robust security and compliance measures.
+- Ensuring the platform supports regular releases without disrupting existing borrowers.
+
+This platform will be used by both borrowers and loan officers, and will be hosted in a secure, compliant environment.
+
+---
+
+### 1.3 Applicable Standards and Regulations
+
+The platform must comply with the following standards and regulations:
+
+- **RBI NBFC-AA Directions 2025**: Governs the sharing of financial information between NBFC-As and Financial Information Providers.
+- **MeitY Electronic Consent Framework v1.1**: Defines the technical specifications for electronic consent, including digital signatures, granular control, and interoperability.
+- **Sahamati SRO-AA Framework**: Establishes benchmarks for professional market conduct, including codes of conduct, fair competition, and protection of stakeholders.
+- **IEEE 830-1998**: Provides guidance on the structure and content of SRS documents, including the importance of evolving requirements and formal change processes.
+
+---
+
+## 2. Overall Description
+
+### 2.1 Product Perspective
+
+The digital lending platform is designed to serve as a central hub for small business loan applications, processing, and disbursement. It will be used by:
+
+- **Borrowers**: To apply for loans, upload financial documents, track application status, and receive funding updates.
+- **Loan Officers**: To review applications, request additional information, and approve or reject loans.
+- **Integrations**: With credit bureaus and banking providers for credit scoring, loan disbursement, and financial data sharing.
+
+The platform will be hosted in a secure, scalable environment and will support regular updates and feature additions.
+
+---
+
+### 2.2 Product Functions
+
+The platform must provide the following functions:
+
+| Function | Description |
+|---------|-------------|
+| Loan Application | Borrowers can apply for loans through the platform. |
+| Document Upload | Borrowers can upload financial documents required for loan evaluation. |
+| Application Tracking | Borrowers can track the status of their loan applications. |
+| Funding Updates | Borrowers can receive notifications and updates regarding loan disbursement. |
+| Application Review | Loan officers can review loan applications and make decisions. |
+| Request for Additional Information | Loan officers can request additional documents or information from borrowers. |
+| Loan Approval/Rejection | Loan officers can approve or reject loan applications. |
+| Integration with Credit Bureaus | The platform must integrate with multiple credit bureaus for credit scoring. |
+| Integration with Banking Providers | The platform must integrate with banking providers for loan disbursement and financial data sharing. |
+| Eligibility Criteria Management | The platform must support frequent updates to eligibility criteria and loan products. |
+
+---
+
+### 2.3 User Characteristics
+
+The platform will be used by the following users:
+
+- **Borrowers**: Small business owners seeking loans. They will be the primary users of the platform for applying, tracking, and receiving updates.
+- **Loan Officers**: Financial professionals responsible for reviewing applications and making decisions.
+- **System Administrators**: Responsible for maintaining the platform, ensuring security, and managing integrations.
+- **Regulatory Compliance Officers**: Ensure that the platform complies with all applicable laws and regulations.
+
+---
+
+### 2.4 Constraints
+
+The following constraints must be considered:
+
+- **Regulatory Compliance**: The platform must comply with all applicable laws and regulations, including the RBI NBFC-AA Directions 2025 and the MeitY Electronic Consent Framework.
+- **Data Security**: The platform must ensure the confidentiality, integrity, and availability of financial data.
+- **Integration Flexibility**: The platform must support integration with multiple credit bureaus and banking providers, with the ability to adapt to changes in partnerships.
+- **Regular Updates**: The platform must support frequent updates to eligibility criteria, loan products, and customer workflows without disrupting existing borrowers.
+
+---
+
+### 2.5 Assumptions and Dependencies
+
+- The platform will be integrated with at least three credit bureaus and two banking providers.
+- The platform will support multiple languages and currencies.
+- The platform will

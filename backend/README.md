@@ -25,6 +25,23 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
 
+## Streamlit interface
+
+Install the backend requirements (including Streamlit), then start the API and UI in separate PowerShell windows from `backend`:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn api.main:app --reload
+```
+
+In the second window:
+
+```powershell
+python -m streamlit run streamlit_app.py
+```
+
+Open the local Streamlit URL it prints (usually `http://localhost:8501`). Keep the Kaggle notebook and FastAPI server running. The UI calls `/health`, `/ingest`, and `/generate/stream`; generated model text appears live while the complete SRS and workflow details are prepared. Intermediate tokens are also saved to the backend stream log. The non-streaming `/generate` endpoint remains available for clients that want one completed JSON response.
+
 Call `POST /ingest` once after starting the service, then call `POST /generate` with:
 
 ```json

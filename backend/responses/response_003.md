@@ -1,66 +1,95 @@
-# Software Requirements Specification
+# Software Requirements Specification (SRS)
 
-## Executive Summary
-- Initial request: Users should link savings accounts and fetch financial statements using PAN and DOB with consent management, audit logging, and secure data retention.
-- Target organization scale: Medium
-- Recommended SDLC: DevSecOps
+## 1. Introduction
 
-## Classified Requirements
+### 1.1 Purpose
 
-### FR-AA-001 - Electronic Consent for Data Sharing
-- Category: Functional
-- Priority: Must Have
-- Citation: [MeitY Electronic Consent Framework v1.1 | Page 3]
-- Description: Ensure data sharing between users and service providers is conducted via electronic consent as mandated by the MeitY Electronic Consent Framework.
-- Acceptance criteria:
-- Given a user request to share financial data, When the system initiates data sharing, Then it must require explicit electronic consent from the user.
-- Given a user's electronic consent, When data is shared, Then the system must log the consent details and ensure it is not revoked without user action.
-### FR-AA-002 - Secure Handling of PAN/DOB
-- Category: Functional
-- Priority: Must Have
-- Citation: [ReBIT Guidelines - PAN/DOB Account Discovery | Page 2]
-- Description: PAN and DOB must be masked, not stored in plain text, and used exclusively for account discovery as per ReBIT guidelines.
-- Acceptance criteria:
-- Given a request to use PAN or DOB for account discovery, When the system processes the request, Then PAN/DOB must be masked and not stored in plain text.
-- Given a scenario where PAN/DOB is provided by the user, When stored, Then it must be encrypted and accessible only for account discovery purposes.
-### FR-AA-003 - Audit Logging for Data Access
-- Category: Functional
-- Priority: Must Have
-- Citation: [RBI Master Direction - NBFC-AA Directions 2016 | Page 12]
-- Description: All data access and sharing activities must be logged with timestamps, user IDs, and action details as per RBI Master Direction.
-- Acceptance criteria:
-- Given a data access event, When the system processes it, Then it must generate an audit log entry with timestamp, user ID, and action type.
-- Given a request to retrieve financial statements, When data is fetched, Then the system must record the transaction in audit logs for 5+ years.
-### FR-AA-004 - Secure Data Retention
-- Category: Functional
-- Priority: Must Have
-- Citation: [RBI Master Direction - NBFC-AA Directions 2016 | Page 12]
-- Description: User data must be encrypted, access-controlled, and retained securely in compliance with RBI data security mandates.
-- Acceptance criteria:
-- Given a user's financial data, When stored, Then it must be encrypted using AES-256 and accessible only via consent-based authorization.
-- Given a request to retain data, When the system stores it, Then it must enforce access controls and protect against unauthorized disclosure.
+This Software Requirements Specification (SRS) defines the functional and non-functional requirements for the digital lending platform for small businesses. The platform is designed to facilitate loan applications, document uploads, application tracking, and loan disbursement, while ensuring compliance with regulatory and security standards.
 
-## Quality Review
-- Complete: False
-- Ambiguity score: 0.7
-- Missing aspects:
-- Consent revocation process for electronic consent
-- Data retention period for user financial data
-- Data minimization/purpose limitation for PAN/DOB usage beyond account discovery
+### 1.2 Scope
 
-## SDLC Evaluation
-- Regulatory Compliance: 95% - 
-- Security Integration: 92% - 
-- Iterative Testing: 89% - 
+The platform will support both borrowers and loan officers, enabling them to interact with the system through a web-based interface. The system will integrate with multiple credit bureaus and banking providers, with the ability to adapt to evolving partnerships and scoring rules. The platform must support frequent updates to eligibility criteria, loan products, and workflows based on market feedback and regulatory changes.
 
-## Workflow Phases
-- Regulatory Requirements Mapping (Pre-Dev)
-- Secure Code Reviews (CI/CD Pipeline)
-- Automated Compliance Testing (SAST/SAST)
-- Regulatory Audit Simulation (UAT)
-- Continuous Monitoring & Logging (Production)
+### 1.3 Applicable Standards
 
-## Approval Checklist
-- Requirements baseline reviewed
-- Regulatory citations verified
-- Security gates approved
+- **IEEE 830-1998**: This document follows the IEEE Software Requirements Specification standard, which emphasizes the importance of well-written, comprehensive, and evolving requirements.
+- **Regulatory Compliance**: The platform must comply with relevant financial regulations, including but not limited to the Reserve Bank of India (RBI) NBFC-AA Directions 2025, the MeitY Electronic Consent Framework, and data protection laws such as GDPR and CCPA.
+
+---
+
+## 2. Overall Description
+
+### 2.1 Product Perspective
+
+The digital lending platform is a critical component of the financial services ecosystem, designed to streamline the loan application process for small businesses. It serves as a centralized hub for borrowers and loan officers, ensuring transparency, efficiency, and compliance.
+
+### 2.2 Product Functions
+
+The platform must provide the following core functions:
+
+- **Borrower Features**:
+  - Apply for loans
+  - Upload financial documents
+  - Track application status
+  - Receive funding updates
+
+- **Loan Officer Features**:
+  - Review applications
+  - Request additional information
+  - Approve or reject loans
+
+- **Integration Capabilities**:
+  - Integrate with multiple credit bureaus and banking providers
+  - Support dynamic changes in integration partners and scoring rules
+
+- **Regulatory and Compliance Features**:
+  - Ensure data privacy and security
+  - Obtain and manage borrower consent for data sharing
+  - Comply with data retention policies
+  - Support frequent updates to eligibility criteria and workflows
+
+### 2.3 User Characteristics
+
+- **Borrowers**: Small business owners seeking loans, typically with limited financial resources and a need for accessible, user-friendly interfaces.
+- **Loan Officers**: Financial professionals responsible for reviewing applications, making decisions, and ensuring compliance with internal and external regulations.
+
+### 2.4 Constraints
+
+- **Regulatory Compliance**: The platform must adhere to the RBI NBFC-AA Directions 2025, the MeitY Electronic Consent Framework, and other relevant financial regulations.
+- **Data Security**: The platform must implement robust security measures to protect sensitive financial data and borrower information.
+- **System Stability**: The platform must support frequent updates and changes without disrupting existing borrowers or loan processes.
+
+### 2.5 Operational and Environmental Constraints
+
+- **Integration Flexibility**: The platform must support integration with multiple credit bureaus and banking providers, with the ability to adapt to evolving partnerships.
+- **Scalability**: The platform must be scalable to accommodate future growth in user base and transaction volume.
+- **Performance**: The platform must ensure fast and reliable performance, especially during peak usage periods.
+
+---
+
+## 3. Functional Requirements
+
+### 3.1 Borrower Functionality
+
+- **Loan Application**: Borrowers must be able to apply for loans through a web-based interface.
+- **Document Upload**: Borrowers must be able to upload financial documents such as tax returns, bank statements, and business plans.
+- **Application Tracking**: Borrowers must be able to track the status of their loan applications in real-time.
+- **Funding Updates**: Borrowers must receive notifications and updates regarding the status of their loan disbursements.
+
+### 3.2 Loan Officer Functionality
+
+- **Application Review**: Loan officers must be able to review loan applications and assess eligibility.
+- **Request for Additional Information**: Loan officers must be able to request additional information from borrowers if needed.
+- **Approval/Rejection**: Loan officers must be able to approve or reject loan applications based on predefined criteria.
+
+### 3.3 Integration with External Systems
+
+- **Credit Bureau Integration**: The platform must integrate with multiple credit bureaus to retrieve credit scores and historical data.
+- **Banking Provider Integration**: The platform must integrate with banking providers to facilitate loan disbursement and fund transfers.
+- **Dynamic Integration Management**: The platform must support changes in integration partners and scoring rules without disrupting existing operations.
+
+### 3.4 Regulatory and Compliance Features
+
+- **Consent Management**: The platform must implement a system for obtaining and managing borrower consent for data sharing with third-party providers.
+- **Data Privacy**: The platform must ensure compliance with data protection laws such as GDPR and CCPA.
+- **Data Retention**: The platform must implement data
